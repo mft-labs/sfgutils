@@ -30,13 +30,14 @@ import com.sterlingcommerce.woodstock.workflow.WorkFlowContext;
 
 
 public class SfgApiClient {
+	private static HashMap<String, String> config = null;
 
 	public static HashMap<String, String> GetConfig() {
 		String sfgHome = System.getenv().get("AMF_SFG_HOME");
 		//File file = new File(sfgHome + "/properties/customer_overrides.properties");
 		File file = new File(sfgHome + "/properties/sfgutils.properties");
 		HashMap<String, String> dict = new HashMap<String, String>();
-		Scanner sc;
+		Scanner sc = null;
 		try {
 			sc = new Scanner(file);
 			while (sc.hasNextLine()) {
@@ -53,15 +54,55 @@ public class SfgApiClient {
 			}
 		} catch (FileNotFoundException e) {
 			return null;
+		} finally {
+			if(sc!=null) {
+				sc.close();
+			}
 		}
 		return dict;
-		
-		/*HashMap<String,String> dict = new HashMap<String,String>();
-		dict.put("SFG_API_URL","http://192.168.168.171:40083/B2BAPIs/svc");
-		dict.put("SFG_SI_USERNAME","admin");
-		dict.put("SFG_SI_PASSWORD","password");
-		return dict;*/
 
+	}
+
+	public static HashMap<String,Object> isTradingPartnerGM(String partner) throws Exception {
+		HashMap<String, String> config = GetConfig();
+		HashMap<String, Object> resultMap = new HashMap<String, Object>();
+		StringWriter sw = new StringWriter();
+		if (config != null) {
+			String apiUrl = config.get("SFG_API_BASEURL");
+			String apiUser = config.get("SFG_SI_USERNAME");
+			String apiPasswd = config.get("SFG_SI_PASSWORD");
+			sw.write("Connecting Api with "+apiUrl+"\n");
+			String auth = apiUser + ":" + apiPasswd;
+			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+			String authHeaderValue = "Basic " + new String(encodedAuth);
+			System.out.println(authHeaderValue);
+			
+			URL url = new URL(apiUrl + "/tradingpartners/?searchFor="+partner);
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setRequestProperty("Accept", "application/json");
+			con.setRequestProperty("Authorization", authHeaderValue);
+			con.setConnectTimeout(15000);
+			con.setDoOutput(true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer content = new StringBuffer();
+			while ((inputLine = in.readLine()) != null) {
+				content.append(inputLine);
+			}
+			in.close();
+			JSONReader reader = new JSONReader();
+			ArrayList result = (ArrayList)reader.read(content.toString());
+			
+			HashMap<String,Object> user = (HashMap<String,Object>)result.get(0);
+			HashMap<String, Object> useGlobalMailbox = (HashMap<String,Object>)user.get("useGlobalMailbox");
+			sw.write("Retrieved code as "+useGlobalMailbox.get("code").toString()+"\n");
+			resultMap.put("GMUser",useGlobalMailbox.get("code").toString());
+			resultMap.put("details", sw.toString());
+			return resultMap;
+		}
+		return null;
 	}
 	
 	public static HashMap<String,Object> isGMUser(String partner) throws Exception {
@@ -104,52 +145,6 @@ public class SfgApiClient {
 			RuntimeException e2 = new RuntimeException("Failed to retrieve partner information "+e.getMessage());
 			throw e2;
 		}
-	}
-
-
-	public static Boolean isTradingPartnerGM(String partner) throws Exception {
-		HashMap<String, String> config = GetConfig();
-		if (config != null) {
-			String apiUrl = config.get("SFG_API_BASEURL");
-			String apiUser = config.get("SFG_SI_USERNAME");
-			String apiPasswd = config.get("SFG_SI_PASSWORD");
-			
-			String auth = apiUser + ":" + apiPasswd;
-			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
-			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
-			
-			URL url = new URL(apiUrl + "/tradingpartners/?searchFor="+partner);
-			HttpURLConnection con = (HttpURLConnection) url.openConnection();
-			con.setRequestMethod("GET");
-			con.setRequestProperty("Content-Type", "application/json");
-			con.setRequestProperty("Accept", "application/json");
-			con.setRequestProperty("Authorization", authHeaderValue);
-			con.setConnectTimeout(15000);
-			//Map<String, String> parameters = new HashMap<>();
-			//parameters.put("searchFor", partner);
-			con.setDoOutput(true);
-			//DataOutputStream out = new DataOutputStream(con.getOutputStream());
-			//out.writeBytes(ParameterStringBuilder.getParamsString(parameters));
-			//out.flush();
-			//out.close();
-			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer content = new StringBuffer();
-			while ((inputLine = in.readLine()) != null) {
-				content.append(inputLine);
-			}
-			in.close();
-			
-			//System.out.println(content.toString());
-			JSONReader reader = new JSONReader();
-			ArrayList result = (ArrayList)reader.read(content.toString());
-			
-			HashMap<String,Object> user = (HashMap<String,Object>)result.get(0);
-			HashMap<String, Object> useGlobalMailbox = (HashMap<String,Object>)user.get("useGlobalMailbox");
-			return useGlobalMailbox.get("code").toString().equalsIgnoreCase("true");
-		}
-		return null;
 	}
 	
 	public static String addKnownHostKey(WorkFlowContext wfc,KhkParameters khkParams) throws Exception {
