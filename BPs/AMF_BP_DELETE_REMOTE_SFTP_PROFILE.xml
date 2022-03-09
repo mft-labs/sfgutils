@@ -1,0 +1,70 @@
+<process name="AMF_BP_DELETE_REMOTE_SFTP_PROFILE">
+  <sequence name="Main_start">
+    <assign to="." from="DocToDOM(PrimaryDocument)"></assign>
+    <operation name="AmfService">
+      <participant name="AmfService"/>
+      <output message="AmfServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="classname">com.mftlabs.sfgutils.bpexec.DeleteRemoteSftpProfile</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <operation name="Release Service">
+      <participant name="ReleaseService"/>
+      <output message="ReleaseServiceTypeInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="TARGET">PrimaryDocument</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <assign to="Result/Output/Status">SFTP Profile Deleted Successfully</assign>
+    <assign to="." from="DOMToDoc(/ProcessData/Result/Output,&apos;PrimaryDocument&apos;)"></assign>
+    <operation name="HTTP Respond Service">
+      <participant name="HttpRespond"/>
+      <output message="HttpRespondServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="doc-has-headers">false</assign>
+        <assign to="status-code">200</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <onFault>
+      <sequence name="Onfault_start">
+        <operation name="Release Service">
+          <participant name="ReleaseService"/>
+          <output message="ReleaseServiceTypeInputMessage">
+            <assign to="." from="*"></assign>
+            <assign to="TARGET">PrimaryDocument</assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+        <assign to="Result/Output/Status">SFTP Profile Delete Failed</assign>
+        <assign to="." from="DOMToDoc(/ProcessData/Result/Output,&apos;PrimaryDocument&apos;)"></assign>
+        <operation name="HTTP Respond Service">
+          <participant name="HttpRespond"/>
+          <output message="HttpRespondServiceInputMessage">
+            <assign to="." from="*"></assign>
+            <assign to="doc-has-headers">false</assign>
+            <assign to="status-code">400</assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </onFault>
+  </sequence>
+</process>
