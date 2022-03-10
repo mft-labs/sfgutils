@@ -34,7 +34,6 @@ public class SfgApiClient {
 
 	public static HashMap<String, String> GetConfig() {
 		String sfgHome = System.getenv().get("AMF_SFG_HOME");
-		//File file = new File(sfgHome + "/properties/customer_overrides.properties");
 		File file = new File(sfgHome + "/properties/sfgutils.properties");
 		HashMap<String, String> dict = new HashMap<String, String>();
 		Scanner sc = null;
@@ -77,7 +76,7 @@ public class SfgApiClient {
 			String authHeaderValue = "Basic " + new String(encodedAuth);
 			System.out.println(authHeaderValue);
 			
-			URL url = new URL(apiUrl + "/tradingpartners/?searchFor="+partner);
+			URL url = new URL(apiUrl + "/B2BAPIs/svc/tradingpartners/?searchFor="+partner);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 			con.setRequestProperty("Content-Type", "application/json");
@@ -111,9 +110,6 @@ public class SfgApiClient {
 	    ResultSet rs = null;
 	    String query = "select ORGANIZATION_CODE from YFS_ORGANIZATION  where OBJECT_ID in (select ENTITY_ID from SCI_ENTITY_EXTNS where EXTENSION_KEY = 'PARTNER_USES_DIST_MAILBOX') and ORGANIZATION_CODE='"+partner+"'";
 	    HashMap<String, String> config = GetConfig();
-	    /*if (config == null) {
-	    	config = GetConfig();
-	    }*/
 	    try {
 			HashMap<String,Object> result = new HashMap<String,Object>();
 			 String dbPool = config.get("SFG_DBPOOL");
@@ -139,7 +135,6 @@ public class SfgApiClient {
 		      }
 		      result.put("GMUser",gmUser);
 		      result.put("details",sw.toString());
-		      //return gmUser;
 		      return result;
 		} catch(Exception e) {
 			RuntimeException e2 = new RuntimeException("Failed to retrieve partner information "+e.getMessage());
@@ -264,18 +259,6 @@ public class SfgApiClient {
 		return null;
 	}
 	
-	/*public static String GetKnownHostKey(WorkFlowContext wfc,String sftpProfile) throws Exception {
-		
-		String resp = GetRemoteSftpProfile(wfc,sftpProfile);
-		
-		if (resp.contains("knownHostKeys")) {
-			
-		}
-		
-		return null;
-	}*/
-	
-	
 	public static String GetRemoteSftpProfile(WorkFlowContext wfc,String sftpProfile) throws Exception {
 		HashMap<String, String> config = GetConfig();
 		if (config != null) {
@@ -296,13 +279,6 @@ public class SfgApiClient {
 			con.setRequestProperty("Authorization", authHeaderValue);
 			con.setConnectTimeout(15000);
 			con.setDoOutput(true);
-			
-			/*String outputStr = "{}\n" ;
-			byte[] outputBytes = outputStr.getBytes("UTF-8");
-			OutputStream os = con.getOutputStream();
-			os.write(outputBytes);
-
-			os.close();*/
 			
 			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			String inputLine;
@@ -325,7 +301,6 @@ public class SfgApiClient {
 				wfc.setWFContent("ExceptionRaised/GetKHK", sw.toString());
 			}
 			
-			//return content.toString();
 		}
 		return null;
 	}
@@ -350,13 +325,6 @@ public class SfgApiClient {
 			con.setRequestProperty("Authorization", authHeaderValue);
 			con.setConnectTimeout(15000);
 			con.setDoOutput(true);
-			
-			/*String outputStr = "{}\n" ;
-			byte[] outputBytes = outputStr.getBytes("UTF-8");
-			OutputStream os = con.getOutputStream();
-			os.write(outputBytes);
-
-			os.close();*/
 			
 			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			String inputLine;

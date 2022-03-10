@@ -37,14 +37,6 @@ public class ManageKnownHostKey {
 			in.close();
 			
 			String sshKeyData = content.toString();
-			
-			
-			/*wfc.setWFContent("SSHReceived", sshKeyData);
-			byte[] encoded = Base64.getEncoder().encode(sshKeyData.getBytes(StandardCharsets.UTF_8));
-			wfc.setWFContent("Base64Encoded", new String(encoded));
-			
-			System.out.printf("SSH Received:%s",sshKeyData);
-			System.out.printf("Base64 Encoded", new String(encoded));*/
 			KhkParameters khkParams = new KhkParameters();
 			khkParams.setHost(host);
 			khkParams.setPort(port);
@@ -56,38 +48,6 @@ public class ManageKnownHostKey {
 			khkParams.setUserIdentityKey(userIdentityKey);
 			khkParams.setSshKeyData(sshKeyData);
 			khkParams.setDataCenter(dataCenter);
-			
-			/*String outputStr = "{"
-					+ "\"characterEncoding\": null,\n" + 
-					"  \"compression\": null,\n" + 
-					"  \"connectionRetryCount\": null,\n" + 
-					"  \"directory\": null,\n" + 
-					"  \"knownHostKeys\": [\n" + 
-					"    {\"name\": \""+khkParams.getKhkName()+"\"\n" + 
-					"    }\n" + 
-					"  ],\n" + 
-					"  \"localPortRange\": null,\n" + 
-					"  \"preferredAuthenticationType\": \""+khkParams.getAuthType()+"\",\n" + 
-					"  \"preferredCipher\": null,\n" + 
-					"  \"preferredMacAlgorithm\": null,\n" + 
-					"  \"profileName\": \""+khkParams.getProfileName()+"\",\n" + 
-					"  \"remoteHost\": \""+khkParams.getHost()+"\",\n" + 
-					"  \"remotePort\": "+khkParams.getPort()+",\n" + 
-					"  \"remoteUser\": \""+khkParams.getUsername()+"\",\n" + 
-					"  \"responseTimeOut\": null,\n" + 
-					"  \"retryDelay\": null,\n" ;
-					if (khkParams.getAuthType().equalsIgnoreCase("password")) {
-						outputStr = outputStr + "  \"sshPassword\": \""+khkParams.getPassword()+"\",\n";
-						outputStr = outputStr + "  \"userIdentityKey\": null\n";
-					} else {
-						outputStr = outputStr + "  \"sshPassword\": null,\n";
-						outputStr = outputStr + "  \"userIdentityKey\": \""+khkParams.getUserIdentityKey()+"\"\n";
-					}
-					outputStr += "}\n" ;
-			//System.out.printf("Data sending to Add Remote Profile %v", outputStr);
-			wfc.setWFContent("RequestSendingWithPayload", outputStr);*/
-			
-			
 			
 			String result1 = SfgApiClient.addKnownHostKey(wfc,khkParams);
 			wfc.setWFContent("addKnownHostKeyResults", result1); 
