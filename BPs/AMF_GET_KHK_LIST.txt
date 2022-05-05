@@ -1,0 +1,78 @@
+<process name="AMF_GET_KHK_LIST">
+
+  <sequence name="Main_Start">
+
+    <operation name="AmfService-Get_Remote_profile">
+      <participant name="AmfService"/>
+      <output message="AmfServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="classname">com.mftlabs.sfgutils.bpexec.GetKnownHostKeyList</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+	
+	<assign to="/Output/Result" from="/ProcessData/KnownHostKeyList/text()"></assign>
+    <assign to="." from="DOMToDoc(/ProcessData/Output,'PrimaryDocument')"></assign>
+	<operation name="DocKeywordReplace">
+
+<participant name="DocKeywordReplace"/>
+<output message="outmsg">
+<assign to="." from="*"></assign>
+<assign to="literal_mode">true</assign>
+<assign to="literal_bufferSize">102400</assign>
+<assign to="literal_readAheadSize">8192</assign>
+<assign to="keyword1" from="'&amp;quot;'"></assign>
+<assign to="replace1" from="string('22')"></assign>
+<assign to="replacetype1">hex</assign>
+<assign to="keyword2" from="'&amp;apos;'"></assign>
+<assign to="replace2" from="string('27')"></assign>
+<assign to="replacetype2">hex</assign>
+<assign to="keyword3" from="'&amp;lt;'"></assign>
+<assign to="replace3" from="string('3C')"></assign>
+<assign to="replacetype3">hex</assign>
+<assign to="keyword4" from="'&amp;gt;'"></assign>
+<assign to="replace4" from="string('3E')"></assign>
+<assign to="replacetype4">hex</assign>
+<assign to="keyword5" from="'&amp;amp;'"></assign>
+<assign to="replace5" from="string('26')"></assign>
+<assign to="replacetype5">hex</assign>
+</output>
+<input message="inmsg">
+<assign to="." from="*"></assign>
+</input>
+</operation>
+    <operation name="HTTP Respond Service">
+      <participant name="HttpRespond"/>
+      <output message="HttpRespondServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="doc-has-headers">false</assign>
+        <assign to="status-code">200</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+	
+	
+
+    <onFault>
+      <sequence name="Onfault_Start">
+        <assign to="Failed_Reason" from="/ProcessData/Prev_NotSuccess_Adv_Status/text()"></assign>
+        <operation name="HTTP Respond Service">
+          <participant name="HttpRespond"/>
+          <output message="HttpRespondServiceInputMessage">
+            <assign to="." from="*"></assign>
+            <assign to="doc-has-headers">false</assign>
+            <assign to="status-code">400</assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </onFault>
+  </sequence>
+</process>

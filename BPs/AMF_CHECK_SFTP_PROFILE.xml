@@ -1,0 +1,98 @@
+<process name="AMF_CHECK_SFTP_PROFILE">
+  <rule name="UserType-INT">
+    <condition>//UserType/text() = &apos;INT&apos;</condition>
+  </rule>
+
+  <rule name="UserType-EXT">
+    <condition>//UserType/text() = &apos;EXT&apos;</condition>
+  </rule>
+
+  <sequence name="Main_Start">
+    <assign to="." from="DocToDOM(PrimaryDocument)"></assign>
+    <assign to="rHost" from="/ProcessData/Profile/Host/text()"></assign>
+    <assign to="rPort" from="/ProcessData/Profile/Port/text()"></assign>
+    <choice>
+      <select>
+        <case ref="UserType-INT" activity="Internal_KeyGrabber"/>
+        <case ref="UserType-EXT" activity="Ext_keyGrabber"/>
+      </select>
+
+      <sequence name="Internal_KeyGrabber">
+        <operation name="SSHKeyGrabberAdapter">
+          <participant name="SSHKeyGrabberAdapter_Internal"/>
+          <output message="SSHKeyGrabberAdapterInputMessage">
+            <assign to="." from="*"></assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+      <sequence name="Ext_keyGrabber">
+        <operation name="SSHKeyGrabberAdapter">
+          <participant name="SSHKeyGrabberAdapter_External"/>
+          <output message="SSHKeyGrabberAdapterInputMessage">
+            <assign to="." from="*"></assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </choice>
+    <operation name="AmfService-Check_Remote_profile">
+      <participant name="AmfService"/>
+      <output message="AmfServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="classname">com.mftlabs.sfgutils.bpexec.CheckKnownHostKey</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <operation name="Release Service">
+      <participant name="ReleaseService"/>
+      <output message="ReleaseServiceTypeInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="TARGET">PrimaryDocument</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+    <assign to="/Output/Result" from="/ProcessData/checkKnownHostKeyResults/text()"></assign>
+    <assign to="." from="DOMToDoc(/ProcessData/Output,'PrimaryDocument')"></assign>
+    <operation name="HTTP Respond Service">
+      <participant name="HttpRespond"/>
+      <output message="HttpRespondServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="doc-has-headers">false</assign>
+        <assign to="status-code">200</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <onFault>
+      <sequence name="Onfault_Start">
+        <assign to="Failed_Reason" from="/ProcessData/Prev_NotSuccess_Adv_Status/text()"></assign>
+        <operation name="HTTP Respond Service">
+          <participant name="HttpRespond"/>
+          <output message="HttpRespondServiceInputMessage">
+            <assign to="." from="*"></assign>
+            <assign to="doc-has-headers">false</assign>
+            <assign to="status-code">400</assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </onFault>
+  </sequence>
+</process>
