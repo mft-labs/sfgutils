@@ -305,6 +305,125 @@ public class SfgApiClient {
 		return null;
 	}
 	
+	public static String checkKnownHostKey(WorkFlowContext wfc,KhkParameters khkParams) throws Exception {
+		HashMap<String, String> config = GetConfig();
+		if (config != null) {
+			String apiUrl = config.get("SFG_API_BASEURL");
+			String apiUser = config.get("SFG_SI_USERNAME");
+			String apiPasswd = config.get("SFG_SI_PASSWORD");
+			
+			String auth = apiUser + ":" + apiPasswd;
+			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+			String authHeaderValue = "Basic " + new String(encodedAuth);
+			System.out.println(authHeaderValue);
+
+			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyData&searchFor=");
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setRequestProperty("Accept", "application/json");
+			con.setRequestProperty("Authorization", authHeaderValue);
+			con.setConnectTimeout(15000);
+			con.setDoOutput(true);
+			
+			String[] arr = khkParams.getSshKeyData().split(" ");
+			if (arr.length == 3) {
+				khkParams.setSshKeyData(arr[1]);
+			}
+			
+			byte[] encoded = Base64.getEncoder().encode(khkParams.getSshKeyData().getBytes(StandardCharsets.UTF_8));
+			String encodedStr = new String(encoded);
+			
+			
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer content = new StringBuffer();
+			while ((inputLine = in.readLine()) != null) {
+				content.append(inputLine);
+			}
+			in.close();
+			Boolean found = false;
+			JSONReader reader = new JSONReader();
+			ArrayList<HashMap> result = (ArrayList<HashMap>)reader.read(content.toString());
+			
+			for(HashMap data:result) {
+				String khkData =(String) data.get("keyData");
+				
+				String decodedStr =  new String(Base64.getDecoder().decode(khkData.getBytes(StandardCharsets.UTF_8)));
+				
+				decodedStr = decodedStr.replace('\n', ' ');
+				String[] arr2 = decodedStr.split(" ");
+				if (arr2.length >= 3) {
+					decodedStr = arr2[1];
+				}
+			
+				if (decodedStr.equalsIgnoreCase(khkParams.getSshKeyData())) {
+					found = true;
+					break;
+				}
+			}
+			
+			//if (content.toString().contains(khkParams.getSshKeyData())) {
+			if (found) {
+				return "sftp_known_host_key is already present";
+			} else {
+				return "sftp_known_host_key not present";
+			}
+		}
+		return null;
+	}
+	
+	public static String getKnownHostKeyList(WorkFlowContext wfc) throws Exception {
+		HashMap<String, String> config = GetConfig();
+		if (config != null) {
+			String apiUrl = config.get("SFG_API_BASEURL");
+			String apiUser = config.get("SFG_SI_USERNAME");
+			String apiPasswd = config.get("SFG_SI_PASSWORD");
+			
+			String auth = apiUser + ":" + apiPasswd;
+			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+			String authHeaderValue = "Basic " + new String(encodedAuth);
+			System.out.println(authHeaderValue);
+
+			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyId%2CkeyName&searchFor=");
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod("GET");
+			con.setRequestProperty("Content-Type", "application/json");
+			con.setRequestProperty("Accept", "application/json");
+			con.setRequestProperty("Authorization", authHeaderValue);
+			con.setConnectTimeout(15000);
+			con.setDoOutput(true);
+			
+			
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String inputLine;
+			StringBuffer content = new StringBuffer();
+			while ((inputLine = in.readLine()) != null) {
+				content.append(inputLine);
+			}
+			in.close();
+			
+			String output = "";
+			
+			JSONReader reader = new JSONReader();
+			ArrayList<HashMap> result = (ArrayList<HashMap>)reader.read(content.toString());
+			
+			for(HashMap data:result) {
+				String title = (String) data.get("_title");
+				String keyId =(String) data.get("keyId");
+				String keyName = (String) data.get("keyName");
+				output += "<KnownHostKey>\n";
+				output +=  "<title>"+title+"</title>\n";
+				output += "<keyId>"+keyId+"</keyId>\n";
+				output += "<keyName>"+keyName+"</keyName>\n";
+				output += "</KnownHostKey>\n";
+			}
+			
+			return "<KnownHostKeys>"+output+"</KnownHostKeys";
+		}
+		return null;
+	}
+	
 	public static String DeleteKnownHostKey(WorkFlowContext wfc,String knownHostKey) throws Exception {
 		HashMap<String, String> config = GetConfig();
 		if (config != null) {
@@ -449,6 +568,8 @@ public class SfgApiClient {
 			return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
 		}
 	}
+	
+	
 	
 
 }
