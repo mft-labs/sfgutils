@@ -1,0 +1,132 @@
+<process name="CIGNA_SFTP_KHK_OPERATIONS">
+  <rule name="UserType-INT">
+    <condition>//UserType/text() = &apos;INT&apos;</condition>
+  </rule>
+
+  <rule name="UserType-EXT">
+    <condition>//UserType/text() = &apos;EXT&apos;</condition>
+  </rule>
+
+  <rule name="CHECK_KHK_EXISTANCE">
+    <condition>contains(//status/text(),&apos;not present&apos;)</condition>
+  </rule>
+
+  <sequence name="Main_Start">
+    <assign to="." from="DocToDOM(PrimaryDocument)"></assign>
+    <assign to="rHost" from="/ProcessData/Profile/Host/text()"></assign>
+    <assign to="rPort" from="/ProcessData/Profile/Port/text()"></assign>
+    <choice>
+      <select>
+        <case ref="UserType-INT" activity="Internal_KeyGrabber"/>
+        <case ref="UserType-EXT" activity="Ext_keyGrabber"/>
+      </select>
+
+      <sequence name="Internal_KeyGrabber">
+        <operation name="SSHKeyGrabberAdapter">
+          <participant name="SSHKeyGrabberAdapter_Internal"/>
+          <output message="SSHKeyGrabberAdapterInputMessage">
+            <assign to="." from="*"></assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+      <sequence name="Ext_keyGrabber">
+        <operation name="SSHKeyGrabberAdapter">
+          <participant name="SSHKeyGrabberAdapter_External"/>
+          <output message="SSHKeyGrabberAdapterInputMessage">
+            <assign to="." from="*"></assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </choice>
+    <operation name="AmfService-Check_KHK">
+      <participant name="AmfService"/>
+      <output message="AmfServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="classname">com.mftlabs.sfgutils.bpexec.CreateOrDeleteKnownHostKey</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <operation name="Release Service">
+      <participant name="ReleaseService"/>
+      <output message="ReleaseServiceTypeInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="TARGET">PrimaryDocument</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <assign to="/ProcessData/Result" from="/ProcessData/createOrDeleteKnownHostKeyResults"></assign>
+    <assign to="." from="DOMToDoc(/ProcessData/Result,&apos;PrimaryDocument&apos;)"></assign>
+    <operation name="DocKeywordReplace">
+      <participant name="DocKeywordReplace"/>
+      <output message="outmsg">
+        <assign to="." from="*"></assign>
+        <assign to="literal_bufferSize">102400</assign>
+        <assign to="literal_mode">true</assign>
+        <assign to="literal_readAheadSize">8192</assign>
+        <assign to="keyword1" from="&apos;&amp;quot;&apos;"></assign>
+        <assign to="replace1" from="string(&apos;22&apos;)"></assign>
+        <assign to="replacetype1">hex</assign>
+        <assign to="keyword2" from="&apos;&amp;apos;&apos;"></assign>
+        <assign to="replace2" from="string(&apos;27&apos;)"></assign>
+        <assign to="replacetype2">hex</assign>
+        <assign to="keyword3" from="&apos;&amp;lt;&apos;"></assign>
+        <assign to="replace3" from="string(&apos;3C&apos;)"></assign>
+        <assign to="replacetype3">hex</assign>
+        <assign to="keyword4" from="&apos;&amp;gt;&apos;"></assign>
+        <assign to="replace4" from="string(&apos;3E&apos;)"></assign>
+        <assign to="replacetype4">hex</assign>
+        <assign to="keyword5" from="&apos;&amp;amp;&apos;"></assign>
+        <assign to="replace5" from="string(&apos;26&apos;)"></assign>
+        <assign to="replacetype5">hex</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <operation name="HTTP Respond Service">
+      <participant name="HttpRespond"/>
+      <output message="HttpRespondServiceInputMessage">
+        <assign to="." from="*"></assign>
+        <assign to="doc-has-headers">false</assign>
+        <assign to="status-code">200</assign>
+      </output>
+      <input message="inmsg">
+        <assign to="." from="*"></assign>
+      </input>
+    </operation>
+
+    <onFault>
+      <sequence name="Onfault_Start">
+        <assign name="Assign" to="/Status/Failed_Reason" from="/ProcessData/Prev_NotSuccess_Adv_Status/text()" append="true"></assign>
+        <assign to="." from="DOMToDoc(/ProcessData/Status,&apos;PrimaryDocument&apos;)"></assign>
+        <operation name="HTTP Respond Service">
+          <participant name="HttpRespond"/>
+          <output message="HttpRespondServiceInputMessage">
+            <assign to="." from="*"></assign>
+            <assign to="doc-has-headers">false</assign>
+            <assign to="status-code">200</assign>
+          </output>
+          <input message="inmsg">
+            <assign to="." from="*"></assign>
+          </input>
+        </operation>
+
+      </sequence>
+    </onFault>
+  </sequence>
+</process>

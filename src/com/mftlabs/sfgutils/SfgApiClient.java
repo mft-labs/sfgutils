@@ -171,6 +171,7 @@ public class SfgApiClient {
 								+ "\"keyName\":\"" +khkParams.getKhkName()+"\","
 								+ "\"keyStatusEnabled\":true"
 								+ "}";
+			System.out.printf("Payload uploading for add new KHK:\n%s\n",outputStr);
 			byte[] outputBytes = outputStr.getBytes("UTF-8");
 			OutputStream os = con.getOutputStream();
 			os.write(outputBytes);
@@ -201,7 +202,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 			
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshremoteprofiles/");
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -269,7 +270,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 			
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshremoteprofiles/"+sftpProfile);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -315,7 +316,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyId%2CkeyData&searchFor=");
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -369,8 +370,9 @@ public class SfgApiClient {
 			}
 			
 			if (found) {
-				String query = "select profile_id, name, remote_host, remote_port,khost_key_id from sftp_khost_profiles where khost_key_id in ("+khkColl+")";
-				return "<request><query>"+query+"</query>"+"<status>sftp_known_host_key is already present</status></request>";
+				//String query = "select profile_id, name, remote_host, remote_port,khost_key_id from sftp_khost_profiles where khost_key_id in ("+khkColl+")";
+				//return "<request><query>"+query+"</query>"+"<status>sftp_known_host_key is already present</status></request>";
+				return "<request><KnownHostKeyName>"+khkColl+"</KnownHostKeyName><Status>sftp_known_host_key is already present</Status></request>";
 			} else {
 				return "<request><status>sftp_known_host_key not present</status></request>";
 			}
@@ -388,7 +390,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyId%2CkeyName&searchFor=");
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -439,7 +441,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 			
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/"+knownHostKey);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -474,7 +476,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 			
 			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshremoteprofiles/"+sftpProfile);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -516,7 +518,7 @@ public class SfgApiClient {
 			String auth = apiUser + ":" + apiPasswd;
 			byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
 			String authHeaderValue = "Basic " + new String(encodedAuth);
-			System.out.println(authHeaderValue);
+			//System.out.println(authHeaderValue);
 			
 			URL url = new URL(sftpTestUrl);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
