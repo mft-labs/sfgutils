@@ -317,7 +317,7 @@ public class SfgApiClient {
 			String authHeaderValue = "Basic " + new String(encodedAuth);
 			System.out.println(authHeaderValue);
 
-			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyData&searchFor=");
+			URL url = new URL(apiUrl + "/B2BAPIs/svc/sshknownhostkeys/?_include=keyId%2CkeyData&searchFor=");
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 			con.setRequestProperty("Content-Type", "application/json");
@@ -345,9 +345,10 @@ public class SfgApiClient {
 			Boolean found = false;
 			JSONReader reader = new JSONReader();
 			ArrayList<HashMap> result = (ArrayList<HashMap>)reader.read(content.toString());
-			
+			String khkColl = "";
 			for(HashMap data:result) {
 				String khkData =(String) data.get("keyData");
+				String keyId = (String) data.get("_id");
 				
 				String decodedStr =  new String(Base64.getDecoder().decode(khkData.getBytes(StandardCharsets.UTF_8)));
 				
@@ -359,15 +360,19 @@ public class SfgApiClient {
 			
 				if (decodedStr.equalsIgnoreCase(khkParams.getSshKeyData())) {
 					found = true;
-					break;
+					if (khkColl.length()==0) {
+						khkColl += "'"+keyId+"'";
+					} else {
+						khkColl = khkColl+","+ "'"+keyId+"'";
+					}
 				}
 			}
 			
-			//if (content.toString().contains(khkParams.getSshKeyData())) {
 			if (found) {
-				return "sftp_known_host_key is already present";
+				String query = "select profile_id, name, remote_host, remote_port,khost_key_id from sftp_khost_profiles where khost_key_id in ("+khkColl+")";
+				return "<request><query>"+query+"</query>"+"<status>sftp_known_host_key is already present</status></request>";
 			} else {
-				return "sftp_known_host_key not present";
+				return "<request><status>sftp_known_host_key not present</status></request>";
 			}
 		}
 		return null;
