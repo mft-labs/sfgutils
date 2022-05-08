@@ -7,6 +7,14 @@
     <condition>//UserType/text() = &apos;EXT&apos;</condition>
   </rule>
 
+  <rule name="METHOD-POST">
+    <condition>//http-method/text()=&quot;POST&quot;</condition>
+  </rule>
+
+  <rule name="METHOD-DELETE">
+    <condition>//http-method/text()=&quot;DELETE&quot;</condition>
+  </rule>
+
   <sequence name="Main_Start">
     <assign to="." from="DocToDOM(PrimaryDocument)"></assign>
     <assign to="rHost" from="/ProcessData/Profile/Host/text()"></assign>
@@ -64,7 +72,19 @@
       </input>
     </operation>
 
-    <assign to="Result/Status">SFTP Remote Profile Successfully added</assign>
+    <choice>
+      <select>
+        <case ref="METHOD-DELETE" activity="Delete-Success"/>
+        <case ref="METHOD-POST" activity="Add-Success"/>
+      </select>
+
+      <sequence name="Delete-Success">
+        <assign name="Assign" to="Result/Status">SFTP Remote Profile Successfully Deleted</assign>
+      </sequence>
+      <sequence name="Add-Success">
+        <assign to="Result/Status">SFTP Remote Profile Successfully Added</assign>
+      </sequence>
+    </choice>
     <assign to="." from="DOMToDoc(/ProcessData/Result,&apos;PrimaryDocument&apos;)"></assign>
     <operation name="HTTP Respond Service">
       <participant name="HttpRespond"/>
@@ -81,13 +101,13 @@
     <onFault>
       <sequence name="Onfault_Start">
         <assign to="Failed_Reason/Status" from="/ProcessData/Prev_NotSuccess_Adv_Status/text()"></assign>
-		<assign to="." from="DOMToDoc(/ProcessData/Failed_Reason,&apos;PrimaryDocument&apos;)"></assign>
+        <assign to="." from="DOMToDoc(/ProcessData/Failed_Reason,&apos;PrimaryDocument&apos;)"></assign>
         <operation name="HTTP Respond Service">
           <participant name="HttpRespond"/>
           <output message="HttpRespondServiceInputMessage">
             <assign to="." from="*"></assign>
             <assign to="doc-has-headers">false</assign>
-            <assign to="status-code">200</assign>
+            <assign to="status-code">400</assign>
           </output>
           <input message="inmsg">
             <assign to="." from="*"></assign>
